@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:sharding="http://shardingsphere.io/schema/shardingsphere/sharding"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                        http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://www.springframework.org/schema/tx
+                        http://www.springframework.org/schema/tx/spring-tx.xsd
+                        http://www.springframework.org/schema/context
+                        http://www.springframework.org/schema/context/spring-context.xsd
+                        http://shardingsphere.io/schema/shardingsphere/sharding
+                        http://shardingsphere.io/schema/shardingsphere/sharding/sharding.xsd">
+
+
+    <context:property-placeholder location="classpath:database.properties"/>
+
+    <!-- 配置数据来源 一 -->
+    <bean id="sharding_db_0" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="${sharding.jdbc.datasource.sharding_db_0.url}"/>
+        <property name="username" value="${sharding.jdbc.datasource.sharding_db_0.username}"/>
+        <property name="password" value="${sharding.jdbc.datasource.sharding_db_0.password}"/>
+    </bean>
+    <!-- 配置数据来源 二 -->
+    <bean id="sharding_db_1" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="${sharding.jdbc.datasource.sharding_db_1.url}"/>
+        <property name="username" value="${sharding.jdbc.datasource.sharding_db_1.username}"/>
+        <property name="password" value="${sharding.jdbc.datasource.sharding_db_1.password}"/>
+    </bean>
+
+    <!-- 可能不同的业务表有不同的业务规则，会出现好多个分库，分表策略-->
+    <bean id="preciseDatabaseShardingAlgorithm"
+          class="com.baoutu.sharding.demo.algorithm.DataBaseShardingAlgorithm"/>
+    <bean id="preciseTableShardingAlgorithm" class="com.baoutu.sharding.demo.algorithm.TableShardingAlgorithm"/>
+    <!-- 可能不同的业务表有不同的业务规则，会出现好多个分库，分表策略，这块指定了-->
+    <sharding:standard-strategy id="databaseShardingStrategy" sharding-column="user_id"
+                                precise-algorithm-ref="preciseDatabaseShardingAlgorithm"/>
+    <sharding:standard-strategy id="tableShardingStrategy" sharding-column="order_id"
+                                precise-algorithm-ref="preciseTableShardingAlgorithm"/>
+
+    <sharding:data-source id="shardingDataSource">
+        <sharding:sharding-rule data-source-names="sharding_db_0,sharding_db_1">
+            <sharding:table-rules>
+                <sharding:table-rule logic-table="t_sharding_order"
+                                     actual-data-nodes="${sharding.jdbc.datasource.actual.data.nodes.order}"
+                                     database-strategy-ref="databaseShardingStrategy"
+                                     table-strategy-ref="tableShardingStrategy"
+                />
+            </sharding:table-rules>
+        </sharding:sharding-rule>
+    </sharding:data-source>
+
+    <!-- 事务配置 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="shardingDataSource"/>
+    </bean>
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+
+</beans>

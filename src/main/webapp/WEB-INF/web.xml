@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app
+        xmlns="http://java.sun.com/xml/ns/javaee"
+        version="3.0">
+
+    <display-name>sharding-ssm-demo</display-name>
+
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>classpath*:application.xml</param-value>
+    </context-param>
+
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+
+
+    <servlet>
+        <servlet-name>mysharding</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>classpath:spring-mvc.xml</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>mysharding</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+    <!-- 4.解决post乱码 -->
+    <filter>      <!-- 用来声明filter的相关设定,过滤器可以截取和修改一个Servlet或JSP页面的请求或从一个Servlet或JSP页面发出的响应-->
+        <filter-name>encodingFilter</filter-name>     <!--指定filter的名字-->
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class> <!--定义filter的类的名称-->
+        <async-supported>true</async-supported>     <!--设置是否启用异步支持-->
+        <init-param><!--用来定义参数,若在Servlet可以使用下列方法来获得:String param_name=getServletContext().getInitParamter("param-name里面的值");-->
+            <param-name>encoding</param-name>   <!--参数名称-->
+            <param-value>UTF-8</param-value> <!--参数值-->
+        </init-param>
+        <init-param>
+            <param-name>forceEncoding</param-name>
+            <param-value>true</param-value>
+        </init-param>
+
+    </filter>
+    <filter-mapping><!--用来定义filter所对应的URL-->
+        <filter-name>encodingFilter</filter-name>     <!--指定对应filter的名字-->
+        <url-pattern>/*</url-pattern>       <!--指定filter所对应的URL-->
+    </filter-mapping>
+
+
+</web-app>
